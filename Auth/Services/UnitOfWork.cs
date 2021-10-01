@@ -18,7 +18,7 @@ namespace Auth.Services
         {
             get
             {
-                if (_userRepo != null)
+                if (_userRepo == null)
                     _userRepo = new UserRepository(_context);
                 return _userRepo;
             }

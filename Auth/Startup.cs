@@ -1,20 +1,17 @@
+using Auth.Data;
+using Auth.Models;
 using Auth.Services;
 using Auth.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Auth
 {
@@ -32,26 +29,38 @@ namespace Auth
         {
 
             services.AddControllers();
+
             services.AddScoped<IUnitOfWork, UnitOfWork>();
-            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            services.AddSingleton<IPasswordHasher, PasswordHasher>();
+
+            var jwtSection = Configuration.GetSection("JwtSettings");
+            services.Configure<JwtSettings>(jwtSection);
+
+            services.AddDbContext<AppContext>(i =>
+                i.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
+
+            var appSettings = jwtSection.Get<JwtSettings>();
+            var key = Encoding.ASCII.GetBytes(appSettings.Key);
+
+            services.AddAuthentication(x => 
+            {
+                x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
             .AddJwtBearer(jwt =>
             {
+                jwt.RequireHttpsMetadata = true;
                 jwt.SaveToken = true;
                 jwt.TokenValidationParameters = new TokenValidationParameters
                 {
-                    ValidateIssuer = false,
-                    ValidateAudience = false,
-                    ValidateLifetime = true,
-                    RequireExpirationTime = false,
-
                     ValidateIssuerSigningKey = true,
-
-                    ValidIssuer = Configuration["Jwt:Issuer"],
-                    ValidAudience = Configuration["Jwt:Audience"],
-                    IssuerSigningKey = new
-                           SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["Jwt:Key"]))
+                    IssuerSigningKey = new SymmetricSecurityKey(key),
+                    ValidateIssuer = false,
+                    ValidateAudience = false
                 };
             });
+
+
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Auth", Version = "v1" });
@@ -70,13 +79,13 @@ namespace Auth
 
             app.UseRouting();
 
-            //app.UseAuthentication();
-            app.UseJwtBearerAuthentication(new JwtBearerOptions()
-            {
-                Audience = "http://localhost:5001/",
-                Authority = "http://localhost:5000/",
-                AutomaticAuthenticate = true
-            });
+            app.UseAuthentication();
+            //app.UseJwtBearerAuthentication(new JwtBearerOptions()
+            //{
+            //    Audience = "http://localhost:5001/",
+            //    Authority = "http://localhost:5000/",
+            //    AutomaticAuthenticate = true
+            //});
 
             app.UseAuthorization();
 
