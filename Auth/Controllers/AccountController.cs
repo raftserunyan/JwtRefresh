@@ -7,83 +7,91 @@ using Microsoft.AspNetCore.Mvc;
 namespace Auth.Controllers
 {
 	[Route("api/[controller]")]
-    [ApiController]
-    public class AccountController : ControllerBase
-    {
-        private readonly IPasswordHasher _passwordHasher;
-        private readonly IUnitOfWork _uow;
-        private readonly IAuthenticationHelper _authService;
+	[ApiController]
+	public class AccountController : ControllerBase
+	{
+		private readonly IPasswordHasher _passwordHasher;
+		private readonly IUnitOfWork _uow;
+		private readonly IAuthenticationHelper _authService;
 
-        public AccountController(IPasswordHasher hasher,
-                                IUnitOfWork uow, 
-                                IAuthenticationHelper authService)
-        {
-            _passwordHasher = hasher;
-            _uow = uow;
-            _authService = authService;
-        }
+		public AccountController(IPasswordHasher hasher,
+								IUnitOfWork uow,
+								IAuthenticationHelper authService)
+		{
+			_passwordHasher = hasher;
+			_uow = uow;
+			_authService = authService;
+		}
 
 
-        [HttpPost("Register")]
-        public async Task<IActionResult> Register(RegisterViewModel regVm)
-        {
-            if (regVm == null) return BadRequest();
+		[HttpPost("Register")]
+		public async Task<IActionResult> Register(RegisterViewModel regVm)
+		{
+			if (regVm == null) return BadRequest();
 
-            if (!ModelState.IsValid) return BadRequest(regVm);
+			if (!ModelState.IsValid) return BadRequest(regVm);
 
-            User user = new User
-            { 
-                UserName = regVm.UserName,
-                Email = regVm.Email , 
-                PasswordHash = _passwordHasher.Hash(regVm.Password)
-            };
+			User user = await _uow.UserRepository.GetAsync(u => u.UserName == regVm.UserName);
 
-            await _uow.UserRepository.AddAsync(user);
-            await _uow.SaveChangesAsync();
+			if (user != null)
+			{
+				ModelState.AddModelError("", "User already exists");
+				return BadRequest(regVm);
+			}
 
-            var userVm = new UserViewModel
-            {
-                Username = user.UserName,
-                Email = user.Email
-            };
+			user = new User
+			{
+				UserName = regVm.UserName,
+				Email = regVm.Email,
+				PasswordHash = _passwordHasher.Hash(regVm.Password)
+			};
 
-            _authService.Authenticate(userVm);
+			await _uow.UserRepository.AddAsync(user);
+			await _uow.SaveChangesAsync();
 
-            return Ok(userVm); 
-        }
+			var userVm = new UserViewModel
+			{
+				Username = user.UserName,
+				Email = user.Email
+			};
 
-        [HttpPost("LogIn")]
-        public async Task<IActionResult> LogIn(LoginViewModel logVm)
-        {
-            if (logVm == null) return BadRequest("Invalid credentials");
+			_authService.Authenticate(userVm);
 
-            if (!ModelState.IsValid) return BadRequest(logVm);
+			return Ok(userVm);
+		}
 
-            var hashedPwd = _passwordHasher.Hash(logVm.Password);
+		[HttpPost("LogIn")]
+		public async Task<IActionResult> LogIn(LoginViewModel logVm)
+		{
+			if (logVm == null) return BadRequest("Invalid credentials");
 
-            var user = await _uow.UserRepository.GetAsync(x => x.UserName == logVm.UserName && x.PasswordHash == hashedPwd);           
+			if (!ModelState.IsValid) return BadRequest(logVm);
 
-            if (user == null)
-            {
-                ModelState.AddModelError("", "Invalid credentials");
-                return BadRequest(logVm);
-            }
+			var hashedPwd = _passwordHasher.Hash(logVm.Password);
 
-            var userVm = new UserViewModel
-            {
-                Username = user.UserName,
-                Email = user.Email
-            };
+			var user = await _uow.UserRepository.GetAsync(x => x.UserName == logVm.UserName && x.PasswordHash == hashedPwd);
 
-            _authService.Authenticate(userVm);
+			if (user == null)
+			{
+				ModelState.AddModelError("", "Invalid credentials");
+				return BadRequest(logVm);
+			}
 
-            return Ok(userVm);
-        }
+			var userVm = new UserViewModel
+			{
+				Username = user.UserName,
+				Email = user.Email
+			};
 
-        [HttpGet("LogOut")]
-        public IActionResult LogOut()
-        {
-            return Ok();
-        }
-    }
+			_authService.Authenticate(userVm);
+
+			return Ok(userVm);
+		}
+
+		[HttpGet("LogOut")]
+		public IActionResult LogOut()
+		{
+			return Ok();
+		}
+	}
 }
