@@ -1,35 +1,27 @@
-﻿using Auth.Services.Interfaces;
-using Microsoft.AspNetCore.Cryptography.KeyDerivation;
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Cryptography;
-using System.Threading.Tasks;
+﻿using System.Security.Cryptography;
+using System.Text;
+using Auth.Services.Interfaces;
 
 namespace Auth.Services
 {
-    public class PasswordHasher : IPasswordHasher
+	public class PasswordHasher : IPasswordHasher
     {
         public string Hash(string password)
         {
 
-            // generate a 128-bit salt using a cryptographically strong random sequence of nonzero values
-            byte[] salt = new byte[128 / 8];
-            using (var rngCsp = new RNGCryptoServiceProvider())
+            using (SHA256 sha256Hash = SHA256.Create())
             {
-                rngCsp.GetNonZeroBytes(salt);
+                // ComputeHash - returns byte array  
+                byte[] bytes = sha256Hash.ComputeHash(Encoding.UTF8.GetBytes(password));
+
+                // Convert byte array to a string   
+                StringBuilder builder = new StringBuilder();
+                for (int i = 0; i < bytes.Length; i++)
+                {
+                    builder.Append(bytes[i].ToString("x2"));
+                }
+                return builder.ToString();
             }
-
-            // derive a 256-bit subkey (use HMACSHA256 with 100000 iterations)
-            string hashed = Convert.ToBase64String(KeyDerivation.Pbkdf2(
-                password: password,
-                salt: salt,
-                prf: KeyDerivationPrf.HMACSHA256,
-                iterationCount: 100000,
-                numBytesRequested: 256 / 8));
-
-            return hashed;
         }
 
         public bool Compare(string hashedPassword, string password)

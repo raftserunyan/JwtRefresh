@@ -1,31 +1,28 @@
-﻿using Auth.Models;
+﻿using System.Threading.Tasks;
+using Auth.Models;
 using Auth.Services.Interfaces;
 using Auth.ViewModel;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
-using System;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Auth.Controllers
 {
-    [Route("api/[controller]")]
+	[Route("api/[controller]")]
     [ApiController]
-    public class AuthenticationController : ControllerBase
+    public class AccountController : ControllerBase
     {
         private readonly IPasswordHasher _passwordHasher;
         private readonly IUnitOfWork _uow;
-        private readonly JwtSettings _jwtsettings;
+        private readonly IAuthenticationHelper _authService;
 
-        public AuthenticationController(IPasswordHasher hasher , IOptions<JwtSettings> jwtsettings, IUnitOfWork uow)
+        public AccountController(IPasswordHasher hasher,
+                                IUnitOfWork uow, 
+                                IAuthenticationHelper authService)
         {
             _passwordHasher = hasher;
             _uow = uow;
-            _jwtsettings = jwtsettings.Value;
+            _authService = authService;
         }
+
 
         [HttpPost("Register")]
         public async Task<IActionResult> Register(RegisterViewModel regVm)
@@ -50,7 +47,7 @@ namespace Auth.Controllers
                 Email = user.Email
             };
 
-            Authenticate(userVm);
+            _authService.Authenticate(userVm);
 
             return Ok(userVm); 
         }
@@ -58,13 +55,13 @@ namespace Auth.Controllers
         [HttpPost("LogIn")]
         public async Task<IActionResult> LogIn(LoginViewModel logVm)
         {
-            if (logVm == null) return BadRequest();
+            if (logVm == null) return BadRequest("Invalid credentials");
 
             if (!ModelState.IsValid) return BadRequest(logVm);
 
             var hashedPwd = _passwordHasher.Hash(logVm.Password);
 
-            var user = await _uow.UserRepository.GetAsync(x => x.PasswordHash == hashedPwd && x.UserName == logVm.UserName);           
+            var user = await _uow.UserRepository.GetAsync(x => x.UserName == logVm.UserName && x.PasswordHash == hashedPwd);           
 
             if (user == null)
             {
@@ -78,7 +75,7 @@ namespace Auth.Controllers
                 Email = user.Email
             };
 
-            Authenticate(userVm);
+            _authService.Authenticate(userVm);
 
             return Ok(userVm);
         }
@@ -87,30 +84,6 @@ namespace Auth.Controllers
         public IActionResult LogOut()
         {
             return Ok();
-        }
-
-        private void Authenticate(UserViewModel user)
-        {
-            //creates the token by combining the parts
-            var tokenHandler = new JwtSecurityTokenHandler();
-            
-            //secret key of the server
-            var key = Encoding.UTF8.GetBytes(_jwtsettings.Key);
-
-            var tokenDescriptor = new SecurityTokenDescriptor
-            {
-                Subject = new ClaimsIdentity(new Claim[]
-                {
-                    new Claim(ClaimTypes.Name, user.Username),
-                    new Claim(ClaimTypes.Email, user.Email)
-                }),
-                Expires = DateTime.UtcNow.AddDays(2),
-                IssuedAt = DateTime.UtcNow,
-                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
-            };
-
-            var token = tokenHandler.CreateToken(tokenDescriptor);
-            user.Token = tokenHandler.WriteToken(token);
         }
     }
 }

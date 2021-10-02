@@ -1,4 +1,6 @@
-﻿namespace Auth.Services.Interfaces
+﻿using System;
+
+namespace Auth.Services.Interfaces
 {
     public interface IPasswordHasher
     {

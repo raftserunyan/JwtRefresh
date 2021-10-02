@@ -60,7 +60,6 @@ namespace Auth
                 };
             });
 
-
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Auth", Version = "v1" });
@@ -79,15 +78,8 @@ namespace Auth
 
             app.UseRouting();
 
-            app.UseAuthentication();
-            //app.UseJwtBearerAuthentication(new JwtBearerOptions()
-            //{
-            //    Audience = "http://localhost:5001/",
-            //    Authority = "http://localhost:5000/",
-            //    AutomaticAuthenticate = true
-            //});
-
-            app.UseAuthorization();
+			app.UseAuthentication();
+			app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
             {
