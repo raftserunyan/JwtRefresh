@@ -1,10 +1,11 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
+using Auth.Models;
 
 namespace Auth.Controllers
 {
-	[Authorize]
+	[Authorize(Roles = "Admin")]
     [Route("api/[controller]")]
     [ApiController]
     public class HomeController : ControllerBase

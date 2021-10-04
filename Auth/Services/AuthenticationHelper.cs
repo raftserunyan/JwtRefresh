@@ -32,7 +32,8 @@ namespace Auth.Services
 				Subject = new ClaimsIdentity(new Claim[]
 				{
 					new Claim(ClaimTypes.Name, user.Username),
-					new Claim(ClaimTypes.Email, user.Email)
+					new Claim(ClaimTypes.Email, user.Email),
+					new Claim(ClaimTypes.Role, user.Role.Name)
 				}),
 				Expires = DateTime.UtcNow.AddDays(2),
 				IssuedAt = DateTime.UtcNow,

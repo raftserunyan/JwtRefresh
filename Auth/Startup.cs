@@ -24,19 +24,20 @@ namespace Auth
 
         public IConfiguration Configuration { get; }
 
-        // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
 
-            services.AddControllers();
+            services.AddControllers().AddNewtonsoftJson(options => 
+                options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore);
 
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddSingleton<IPasswordHasher, PasswordHasher>();
+            services.AddSingleton<IAuthenticationHelper, AuthenticationHelper>();
 
             var jwtSection = Configuration.GetSection("JwtSettings");
             services.Configure<JwtSettings>(jwtSection);
 
-            services.AddDbContext<AppContext>(i =>
+            services.AddDbContext<AppDbContext>(i =>
                 i.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
 
             var appSettings = jwtSection.Get<JwtSettings>();
@@ -65,8 +66,6 @@ namespace Auth
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Auth", Version = "v1" });
             });
         }
-
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())

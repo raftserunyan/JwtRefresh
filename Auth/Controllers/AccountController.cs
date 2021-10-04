@@ -43,16 +43,20 @@ namespace Auth.Controllers
 			{
 				UserName = regVm.UserName,
 				Email = regVm.Email,
-				PasswordHash = _passwordHasher.Hash(regVm.Password)
+				PasswordHash = _passwordHasher.Hash(regVm.Password),
+				RoleId = 2
 			};
 
 			await _uow.UserRepository.AddAsync(user);
 			await _uow.SaveChangesAsync();
 
+			user = await _uow.UserRepository.GetAsync(u => u.Id == user.Id, x => x.Role);
+
 			var userVm = new UserViewModel
 			{
 				Username = user.UserName,
-				Email = user.Email
+				Email = user.Email,
+				Role = user.Role
 			};
 
 			_authService.Authenticate(userVm);
@@ -69,7 +73,7 @@ namespace Auth.Controllers
 
 			var hashedPwd = _passwordHasher.Hash(logVm.Password);
 
-			var user = await _uow.UserRepository.GetAsync(x => x.UserName == logVm.UserName && x.PasswordHash == hashedPwd);
+			var user = await _uow.UserRepository.GetAsync(x => x.UserName == logVm.UserName && x.PasswordHash == hashedPwd, u => u.Role);
 
 			if (user == null)
 			{
@@ -80,7 +84,8 @@ namespace Auth.Controllers
 			var userVm = new UserViewModel
 			{
 				Username = user.UserName,
-				Email = user.Email
+				Email = user.Email,
+				Role = user.Role
 			};
 
 			_authService.Authenticate(userVm);

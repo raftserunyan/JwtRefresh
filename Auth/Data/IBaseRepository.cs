@@ -9,6 +9,8 @@ namespace Auth.Data
     {
         public Task<TEntity> GetAsync(int id);
         public Task<TEntity> GetAsync(Expression<Func<TEntity, bool>> predicate);
+        public Task<TEntity> GetAsync(Expression<Func<TEntity, bool>> predicate, params Expression<Func<TEntity, object>>[] includeProperties);
+
         public Task<IEnumerable<TEntity>> GetAllAsync();
         public Task<TEntity> AddAsync(TEntity entity);
         public Task<TEntity> UpdateAsync(TEntity entity);

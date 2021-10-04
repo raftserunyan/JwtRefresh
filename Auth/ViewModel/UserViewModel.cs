@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Auth.Models;
+using System;
 
 namespace Auth.ViewModel
 {
@@ -7,5 +8,6 @@ namespace Auth.ViewModel
         public string Username { get; set; }
         public string Email { get; set; }
         public string Token { get; set; }
+        public Role Role { get; set; }
     }
 }

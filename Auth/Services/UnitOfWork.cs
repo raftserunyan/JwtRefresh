@@ -6,9 +6,9 @@ namespace Auth.Services
 {
     public class UnitOfWork : IUnitOfWork
     {
-        private readonly AppContext _context;
+        private readonly AppDbContext _context;
 
-        public UnitOfWork(AppContext dbcontext)
+        public UnitOfWork(AppDbContext dbcontext)
         {
             _context = dbcontext;
         }
@@ -22,6 +22,17 @@ namespace Auth.Services
                     _userRepo = new UserRepository(_context);
                 return _userRepo;
             }
+        }
+
+        private IRoleRepository _roleRepo;
+        public IRoleRepository RoleRepository 
+        {
+            get
+            {
+                if (_roleRepo == null)
+                    _roleRepo = new RoleRepository(_context);
+                return _roleRepo;
+            } 
         }
 
         public async Task SaveChangesAsync()
