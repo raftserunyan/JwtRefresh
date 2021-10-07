@@ -2,6 +2,7 @@
 using Auth.Models;
 using Auth.Services.Interfaces;
 using Auth.ViewModel;
+using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Auth.Controllers
@@ -13,14 +14,17 @@ namespace Auth.Controllers
 		private readonly IPasswordHasher _passwordHasher;
 		private readonly IUnitOfWork _uow;
 		private readonly IAuthenticationHelper _authService;
+		private readonly IMapper _mapper;
 
 		public AccountController(IPasswordHasher hasher,
 								IUnitOfWork uow,
-								IAuthenticationHelper authService)
+								IAuthenticationHelper authService,
+								IMapper mapper)
 		{
 			_passwordHasher = hasher;
 			_uow = uow;
 			_authService = authService;
+			_mapper = mapper;
 		}
 
 
@@ -39,25 +43,16 @@ namespace Auth.Controllers
 				return BadRequest(regVm);
 			}
 
-			user = new User
-			{
-				UserName = regVm.UserName,
-				Email = regVm.Email,
-				PasswordHash = _passwordHasher.Hash(regVm.Password),
-				RoleId = 2
-			};
+			user = _mapper.Map<User>(regVm);
+			user.PasswordHash = _passwordHasher.Hash(regVm.Password);
+			user.RoleId = (await _uow.RoleRepository.GetAsync(r => r.Name == "User")).Id;
 
 			await _uow.UserRepository.AddAsync(user);
 			await _uow.SaveChangesAsync();
 
-			user = await _uow.UserRepository.GetAsync(u => u.Id == user.Id, x => x.Role);
+			await _uow.UserRepository.LoadReferenceAsync(user, u => u.Role);
 
-			var userVm = new UserViewModel
-			{
-				Username = user.UserName,
-				Email = user.Email,
-				Role = user.Role
-			};
+			var userVm = _mapper.Map<UserViewModel>(user);
 
 			_authService.Authenticate(userVm);
 
@@ -81,22 +76,11 @@ namespace Auth.Controllers
 				return BadRequest(logVm);
 			}
 
-			var userVm = new UserViewModel
-			{
-				Username = user.UserName,
-				Email = user.Email,
-				Role = user.Role
-			};
+			var userVm = _mapper.Map<UserViewModel>(user);
 
 			_authService.Authenticate(userVm);
 
 			return Ok(userVm);
-		}
-
-		[HttpGet("LogOut")]
-		public IActionResult LogOut()
-		{
-			return Ok();
 		}
 	}
 }

@@ -65,6 +65,8 @@ namespace Auth
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Auth", Version = "v1" });
             });
+
+            services.AddAutoMapper(typeof(Infrastructure.AutoMapperProfile));
         }
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
