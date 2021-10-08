@@ -19,8 +19,11 @@ namespace Auth.Infrastructure
 				.ForMember(dest => dest.UserName, opts => opts.MapFrom(src => src.UserName))
 				.ForMember(dest => dest.Email, opts => opts.MapFrom(src => src.Email))
 				.ForAllOtherMembers(opt => opt.Ignore());
-				
-			CreateMap<User, UserViewModel>();
+
+			CreateMap<Role, RoleViewModel>();
+
+			CreateMap<User, UserViewModel>()
+				.ForMember(dest => dest.Role, opts => opts.MapFrom(src => new RoleViewModel { Name = src.Role.Name }));
 		}
 	}
 }
