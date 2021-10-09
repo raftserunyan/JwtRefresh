@@ -1,4 +1,4 @@
-﻿using Auth.Data;
+﻿using Auth.Data.Interfaces;
 using System.Threading.Tasks;
 
 namespace Auth.Services.Interfaces
@@ -7,6 +7,7 @@ namespace Auth.Services.Interfaces
     {
         IUserRepository UserRepository { get; }
         IRoleRepository RoleRepository { get; }
+        IRefreshTokenRepository RefreshTokenRepository { get; }
         Task SaveChangesAsync();
     }
 }

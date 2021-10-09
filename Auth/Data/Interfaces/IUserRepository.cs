@@ -1,6 +1,6 @@
 ﻿using Auth.Models;
 
-namespace Auth.Data
+namespace Auth.Data.Interfaces
 {
 	public interface IUserRepository : IBaseRepository<User>
     {

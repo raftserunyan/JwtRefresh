@@ -1,4 +1,5 @@
 ﻿using Auth.Models;
+using Auth.Data.Interfaces;
 
 namespace Auth.Data
 {

@@ -1,5 +1,4 @@
-﻿using System;
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Auth.Models
 {
@@ -15,5 +14,11 @@ namespace Auth.Models
 
         [ForeignKey(nameof(RoleId))]
         public Role Role { get; set; } //navigation property
-    }
+
+
+		public int? RefreshTokenId { get; set; }
+
+        [ForeignKey(nameof(RefreshTokenId))]
+        public RefreshToken RefreshToken { get; set; }
+	}
 }

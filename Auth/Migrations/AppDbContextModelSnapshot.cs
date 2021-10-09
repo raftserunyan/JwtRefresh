@@ -19,6 +19,24 @@ namespace Auth.Migrations
                 .HasAnnotation("ProductVersion", "5.0.10")
                 .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
+            modelBuilder.Entity("Auth.Models.RefreshToken", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<DateTime>("ExpiryDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Token")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("RefreshTokens");
+                });
+
             modelBuilder.Entity("Auth.Models.Role", b =>
                 {
                     b.Property<int>("Id")
@@ -47,6 +65,9 @@ namespace Auth.Migrations
                     b.Property<string>("PasswordHash")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("RefreshTokenId")
+                        .HasColumnType("int");
+
                     b.Property<int?>("RoleId")
                         .HasColumnType("int");
 
@@ -55,6 +76,8 @@ namespace Auth.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("RefreshTokenId");
+
                     b.HasIndex("RoleId");
 
                     b.ToTable("Users");
@@ -62,9 +85,17 @@ namespace Auth.Migrations
 
             modelBuilder.Entity("Auth.Models.User", b =>
                 {
+                    b.HasOne("Auth.Models.RefreshToken", "RefreshToken")
+                        .WithMany()
+                        .HasForeignKey("RefreshTokenId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("Auth.Models.Role", "Role")
                         .WithMany("Users")
                         .HasForeignKey("RoleId");
+
+                    b.Navigation("RefreshToken");
 
                     b.Navigation("Role");
                 });

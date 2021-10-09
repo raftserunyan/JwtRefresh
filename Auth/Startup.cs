@@ -33,6 +33,7 @@ namespace Auth
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddSingleton<IPasswordHasher, PasswordHasher>();
             services.AddSingleton<IAuthenticationHelper, AuthenticationHelper>();
+            services.AddSingleton<ITokenGenerator, TokenGenerator>();
 
             var jwtSection = Configuration.GetSection("JwtSettings");
             services.Configure<JwtSettings>(jwtSection);
