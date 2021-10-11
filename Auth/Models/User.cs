@@ -8,8 +8,9 @@ namespace Auth.Models
         public string UserName { get; set; }
         public string PasswordHash { get; set; }
         public string Email { get; set; }
+        public bool IsConfirmedEmail { get; set; }
 
-       
+
         public int? RoleId { get; set; } //foreign key
 
         [ForeignKey(nameof(RoleId))]

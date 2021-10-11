@@ -8,6 +8,8 @@ namespace Auth.Services.Interfaces
         IUserRepository UserRepository { get; }
         IRoleRepository RoleRepository { get; }
         IRefreshTokenRepository RefreshTokenRepository { get; }
+        IEmailConfirmationRepository EmailConfirmationRepository { get; }
+
         Task SaveChangesAsync();
     }
 }
