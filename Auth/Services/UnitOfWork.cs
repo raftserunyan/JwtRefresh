@@ -1,4 +1,5 @@
 ﻿using Auth.Data;
+using Auth.Data.Interfaces;
 using Auth.Services.Interfaces;
 using System.Threading.Tasks;
 
@@ -35,7 +36,18 @@ namespace Auth.Services
             } 
         }
 
-        public async Task SaveChangesAsync()
+        private IRefreshTokenRepository _refreshTokenRepo;
+		public IRefreshTokenRepository RefreshTokenRepository
+		{
+            get
+            {
+                if (_refreshTokenRepo == null)
+                    _refreshTokenRepo = new RefreshTokenRepository(_context);
+                return _refreshTokenRepo;
+            }
+        }
+
+		public async Task SaveChangesAsync()
         {
             await _context.SaveChangesAsync();
         }
