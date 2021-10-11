@@ -42,15 +42,16 @@ namespace Auth.Controllers
 			if (!ModelState.IsValid) return BadRequest(regVm);
 
 			User user = await _uow.UserRepository.GetAsync(u => u.UserName == regVm.UserName);
-
 			if (user != null)
 			{
 				ModelState.AddModelError("", "User already exists");
 				return BadRequest(regVm);
 			}
 
+			// mapps username and email
 			user = _mapper.Map<User>(regVm);
 			user.PasswordHash = _passwordHasher.Hash(regVm.Password);
+			//how does a user get its Role?
 			user.RoleId = (await _uow.RoleRepository.GetAsync(r => r.Name == "User")).Id;
 
 			await _uow.UserRepository.AddAsync(user);
