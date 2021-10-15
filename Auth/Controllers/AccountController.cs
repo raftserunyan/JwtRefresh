@@ -19,18 +19,21 @@ namespace Auth.Controllers
 		private readonly IAuthenticationHelper _authService;
 		private readonly ITokenGenerator _tokenGenerator;
 		private readonly IMapper _mapper;
+		private readonly IMailService _mailService;
 
 		public AccountController(IPasswordHasher hasher,
 								IUnitOfWork uow,
 								IAuthenticationHelper authService,
 								ITokenGenerator tokenGenerator,
-								IMapper mapper)
+								IMapper mapper,
+								IMailService mailService)
 		{
 			_passwordHasher = hasher;
 			_uow = uow;
 			_authService = authService;
 			_mapper = mapper;
 			_tokenGenerator = tokenGenerator;
+			_mailService = mailService;
 		}
 
 
@@ -42,28 +45,27 @@ namespace Auth.Controllers
 			if (!ModelState.IsValid) return BadRequest(regVm);
 
 			User user = await _uow.UserRepository.GetAsync(u => u.UserName == regVm.UserName);
-
 			if (user != null)
 			{
 				ModelState.AddModelError("", "User already exists");
 				return BadRequest(regVm);
 			}
 
+			// mapps username and email
 			user = _mapper.Map<User>(regVm);
 			user.PasswordHash = _passwordHasher.Hash(regVm.Password);
+			//how does a user get its Role?
 			user.RoleId = (await _uow.RoleRepository.GetAsync(r => r.Name == "User")).Id;
 
+			var confirmation = new EmailConfirmation() { User = user };
+
 			await _uow.UserRepository.AddAsync(user);
-
-			var userDto = _authService.Authenticate(user);
-
-			user.RefreshToken = userDto.RefreshToken;
-
+			await _uow.EmailConfirmationRepository.AddAsync(confirmation);
 			await _uow.SaveChangesAsync();
 
-			var userVm = _mapper.Map<UserViewModel>(userDto);
+			_mailService.SendConfirmationEmailAsync(user, confirmation.Id, Request.Host.Value);
 
-			return Ok(userVm);
+			return Ok("Email sent!");
 		}
 
 		[HttpPost("LogIn")]
@@ -82,6 +84,12 @@ namespace Auth.Controllers
 				ModelState.AddModelError("", "Invalid credentials");
 				return BadRequest(logVm);
 			}
+
+            if (!user.IsConfirmedEmail)
+            {
+				ModelState.AddModelError("", "The user hasn't confirmed account email.");
+				return BadRequest(logVm);
+            }
 
 			var userDto = _authService.Authenticate(user);
 
@@ -166,5 +174,19 @@ namespace Auth.Controllers
 
 			return NoContent();
 		}
+		
+		[HttpGet("ConfirmEmail")]
+        public async Task<IActionResult> ConfirmEmail(Guid id)
+        {
+			var confirmationInfo = await _uow.EmailConfirmationRepository.GetAsync(x => x.Id == id);
+			var user = await _uow.UserRepository.GetAsync( x => confirmationInfo.UserId == x.Id);
+
+            user.IsConfirmedEmail = true;
+
+            _uow.EmailConfirmationRepository.Remove(confirmationInfo);
+			await _uow.SaveChangesAsync();
+
+			return Accepted();
+        }
 	}
 }

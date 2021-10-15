@@ -34,6 +34,7 @@ namespace Auth
             services.AddSingleton<IPasswordHasher, PasswordHasher>();
             services.AddSingleton<IAuthenticationHelper, AuthenticationHelper>();
             services.AddSingleton<ITokenGenerator, TokenGenerator>();
+            services.AddSingleton<IMailService, MailService>();
 
             var jwtSection = Configuration.GetSection("JwtSettings");
             services.Configure<JwtSettings>(jwtSection);

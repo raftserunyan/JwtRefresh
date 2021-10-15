@@ -35,6 +35,7 @@ namespace Auth.Services
 			return userDto;
 		}
 
+		//checks if the jwt is valid and returns a principal
 		public ClaimsPrincipal GetPrincipalFromExpiredToken(string token)
 		{
 			var tokenValidationParameters = new TokenValidationParameters

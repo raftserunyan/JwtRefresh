@@ -26,19 +26,19 @@ namespace Auth.Services
         }
 
         private IRoleRepository _roleRepo;
-        public IRoleRepository RoleRepository 
+        public IRoleRepository RoleRepository
         {
             get
             {
                 if (_roleRepo == null)
                     _roleRepo = new RoleRepository(_context);
                 return _roleRepo;
-            } 
+            }
         }
 
         private IRefreshTokenRepository _refreshTokenRepo;
-		public IRefreshTokenRepository RefreshTokenRepository
-		{
+        public IRefreshTokenRepository RefreshTokenRepository
+        {
             get
             {
                 if (_refreshTokenRepo == null)
@@ -47,7 +47,18 @@ namespace Auth.Services
             }
         }
 
-		public async Task SaveChangesAsync()
+        private IEmailConfirmationRepository _emailConfirmRepo;
+        public IEmailConfirmationRepository EmailConfirmationRepository
+        {
+            get
+            {
+                if (_emailConfirmRepo == null)
+                    _emailConfirmRepo = new EmailConfirmationRepository(_context);
+                return _emailConfirmRepo;
+            }
+        }
+
+        public async Task SaveChangesAsync()
         {
             await _context.SaveChangesAsync();
         }
